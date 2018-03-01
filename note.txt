@@ -1,0 +1,989 @@
+<Linux>
+    常用符号
+        "/"        根目录
+        "~"        用户目录
+        "."        当前
+        ".."       上一级
+
+        ll              查看文件目录列表
+        cd+filename     进入文件夹
+        cd ..           返回当前目录的上一级目录
+        cd -            返回上一次进入的目录
+
+<git>
+    git init          初始化仓库
+
+    git add
+
+    git commit -m""  提交
+
+    git push         推送本地分支到远程分支
+
+    git pull         更新分支
+        git pull doker HEAD:refs/for/master
+
+    git branch       创建分支
+    git branch -d    删除分支
+    git branch -D    强制删除分支
+
+    git checkout     切换分支   等同于 git co
+
+    git  diff        查看上次提交后做了什么，比较当前提交和最新提交之间的差异
+    git  show        显示最后一次修改的内容
+
+    git log          查看提交历史
+    git log -p       显示 每次提交之间的差异
+    git log -p -2    显示最近 两次提交之间的差异
+
+    git status       查看状态
+
+    git clean -fd    清除暂存区的文件
+
+    git fetch
+    git rebase       使版本更新到最新
+
+    git merge   <分支名>　　合并分支
+
+    git revert commit_id    回退某次commit，并把本次回退作为一个新的commit
+
+    git reset      回退提交版本或删除 提交版本(后面可跟版本commit_id，回退之后版本commit_id之后的提交将不复存在)
+        git reset --soft HEAD~n 回退n个提交，这n个提交的所有提交信息将不存在，但这些提交中的修改会全部保留下来并且被放在暂存区（即Changes to be committed状态）
+        git reset HEAD~n   回退n个提交，这n个提交的所有信息将不存在，但这些提交中的修改会全部保留下来（即Changes not staged for commit状态）  这个命令相当于git reset --soft HEAD~n和git reset HEAD
+        git reset --hard HEAD~n   回退n个提交，这n个提交的所有提交信息不存在，而且这些提交中的修改也会全部被删除   这个命令相当于git reset --soft HEAD~n,git reset HEAD和git checkout
+
+    git revert     撤销某次提交的内容，并把这次撤销提交的操作作为一次新的提交保存 起来（不改变当前的status）
+
+    git log filename    查看指定文件的log信息
+    git checkout commitid filename  指定文件回退指定的版本
+
+    问题：
+    　　git checkout 报错如下： 　　　　fatal:Unable to create'/home/niuzhuang/centre/.git/index.lock':File exists
+        解决：因为使用非法字符或操作会出现，进入/.git/目录下将index.lick文件删除就可以了
+    问题     error:you need to resolve your current index first
+        解决：两个分支有冲突文件　git st . 查看是哪个文件冲突并修改
+
+    首次提交需要配置 .git/config文件
+         [core]
+                 repositoryformatversion = 0
+                 filemode = true
+         [remote "doker"]
+                 url = ssh://doker/mocor_sc9832/zrevo
+                 review = http://192.168.5.168:8080
+                 projectname = mocor_sc9832/zrevo
+                 fetch = +refs/heads/*:refs/remotes/doker/*
+         [branch "master"]
+                 remote = doker
+                 merge = refs/heads/master
+
+
+    第一次提交报错
+        ERROR:committer email address niuzhuang@vanzotec.com
+        邮箱地址不一致
+    解决：git commit --amend --author 'niuzhuang <niuzhuang@vanzotec.cn>'
+
+    git push 报错如下
+        error: failed to push some refs to 'ssh://doker/mocor_sc9832/zrevo'
+        解决：
+        执行命令 git push --no-thin doker HEAD:refs/for/master
+
+    重新git push
+    (修改提示信息)
+       1.在主分支上回退提交  git reset --hard HEAD^
+       2.回到分支    git commit --amend  修改提交的提示信息(Change-Id要和之前提交的保持一致)
+    （提交内容有修改）
+       1.在主分支上回退提交    git reset --soft HEAD^
+       2.回到分支，在分支上修改然后提交
+       3.回到主分支，合并分支上的提交，然后 git push
+
+    回退版本后，返回未来的某个版本，要找到对应的commit_id,可以执行以下命令：
+        git reflog                      查看命令历史，确定回到未来哪个版本
+        git reset --hard <commit_id>
+
+    <使用patch>
+        生成patch:
+            git st .
+            git add .
+            (1) git diff --cached > xx.patch
+            (2) git diff branchname --cached > xx.patch
+        使用patch:
+            git apply xx.patch
+        git专用:
+            1)两个节点之间的提交： git format-patch  节点A   节点B
+            2)单个节点： git format-patch -n 节点A （-n就表示要生成几个节点的提交）
+            3)最近一次提交节点的patch ：git format-patch HEAD^
+
+            git专门的patch直接通过git am命令merge即可
+            
+            git clone ssh://think@20.1.1.108:~/hdd/think/360sync/fw556/miki/.git
+
+
+<github>
+创建仓库：
+http://blog.csdn.net/p10010/article/details/51336332
+
+<repo>
+    repo init 下载repo并克隆manifest  例：repo init -u doker:mocor_sc9832/manifest
+
+    repo sync 下载代码  命令后面可以指定目录
+
+    repo start master --all           项目根目录下初始化分支，--all是对所有操作
+
+    repo forall -c 'ID=`git log --before="3 days" -1 --pretty=format:"%H"`;git reset --hard $ID' repo仓库回退到3天前
+
+    repo forall -c git clean -fd     repo仓库清空
+<快捷键>
+    Ctrl + a　　　　　切换到命令行开始
+    Ctrl + e　　　　　切换到命令行末尾
+    Ctrl + l　　　　　清除屏幕内容，等于clear
+    Ctrl + u　　　　　清除剪切光标之前的内容
+    Ctrl + k　　　　　剪切清除光标之后的内容
+    Ctrl + y　　　　　粘贴刚才所删除的字符
+    Ctrl + r　　　　　在历史命令中查找
+    Ctrl + c　　　　　终止命令
+    Ctrl + d　　　　　退出shell,logout
+    Ctrl + z          转入后台运行
+    !!　　　　　　　　重复执行最后一条命令
+    !$　　　　　　　　显示系统最近的一条参数
+
+    查找命令:
+        ack-grep <内容>
+        grep -r <内容>
+
+    rm file                删除文件
+    mv file                重命名文件
+    rm -rf  dir            删除文件夹
+
+    mkdir filename    创建文件夹
+    touch filename    创建文件
+    <解压和压缩>
+        tar命令     解压：tar zxvf filename.tar
+                    压缩：tar czvf filename.tar DirName
+
+        gz命令      解压1：gunzip filename.gz
+                    解压2：gzip -d filename.gz
+                    压缩：gzip filename
+                    .tar.gz和 .tgz
+                    解压：tar zxvf filename.tar.gz
+                    压缩：tar zcvf file.tar.gz Dirname
+                    压缩多个文件：tar zcvf filename.tar.gz Dirname1 Dirname2 Dirname3....
+
+        bz2命令     解压1：bzip2 -d filename.bz2
+                    解压2：bunzip2 filename.bz
+                    .tar.bz
+                    解压：tar jxvf filename.tar.gz
+                    解压：tar -xvf filename.tar.gz
+
+        Z命令       解压：uncompress filename.z
+                    压缩：compress filename
+                    .tar.Z
+                    解压：tar Zxvf filename.tar.z
+                    压缩：tar Zcvf filename.tar.z Dirname
+
+        zip命令     解压：unzip filename.zip
+                    压缩：zip filename.zip Dirname
+                          zip -r filename.zip ./* 
+
+        7z命令      解压：7z e filename.7z(解压到当前目录下)
+                          7z x filename.7z(解压到压缩包名的目录下)
+                    压缩：7z a filename.7z Dirname
+
+        rar命令     解压：rar x filename.rar
+
+        sudo apt-get autoremove --purge <软件名>    深度卸载
+
+
+<VIM>
+    v            选择模式
+    shift+v　　　整行选择
+    ctrl+v　　　 块选择
+    u            撤销
+    Ctrl+r　　　 取消撤销
+    "+y          将内容复制到剪切板
+    "+p          粘贴剪切板内容
+
+    ,+f+x        注释xml
+    ,f+j         注释java代码
+    ,+t+e        打开新窗口
+    ,+t+c        关闭窗口，如果窗口只有一个，则关闭不掉
+    ,+l+g        代码中快速生成Log
+    ,+c+t        查看方法在哪调用
+
+    Ctrl+]       跳转到定义该方法的位置
+    Ctrl+o       回到 上次光标的位置
+    F9           清除行末空格，如果再按底部出现红色说明没有空格
+    ^            跳到行首
+    $            跳到行尾
+    y            复制选中内容
+    p            粘贴
+    w            选中整个单词
+
+    Home         行首
+    End          行尾
+    x            删除一个单词
+    dd           删除一行
+    o            在当前行下面插入一行并进入insert模式
+    O            在当前行上面插入一行并进入insert模式
+    num+G        去某一行
+    G            去最后一行
+    gg           去第一行
+    H M L        去文件的头 中 尾 位置
+    ,+d或:Tlist     正常模式下显示函数列表
+    ctrl+ww         在正常编辑区和tags区域切换
+    在tags区域中，把光标移动   到变量或者函数上，回车，就会自动在正常编辑区中定位指定内容
+    d               在列表区退出列表模式
+
+    *      搜索当前光标所在的word
+
+    搜索设置
+       设置脚本程序 retag_app
+       查看文件夹vim F6
+       内置搜索      F5
+
+    m+marks     将当前光标下位置标记为marks
+    `+marks     跳转到marks
+    marks取值a～z
+    :marks      查看标记列表
+    :delm!      删除标记
+
+    排序
+    .,+15!sort  当前行以下15行按字母排序
+
+<make>
+    . zrevo/envsetup.sh        编译系统前，在项目根目录运行，配置编译环境
+    kheader
+    make -j32                  编译系统
+    ./zrevo/CopyImage.sh -p    将编译的好的项目打包，用于更新手机版本
+    mmm 应用路径　　　　　　　 项目根目录下执行编译app生成apk
+    mmm                        在应用根目录下执行编译app生成apk
+    make update-api            更新api
+
+    chmod a+x          添加脚本权限
+    ./                 执行脚本
+
+    编译 报错
+        Out of memory error (version 1.2-rc4 'Carnac' (298900 f95d7bdecfceb327f9d201a1348397ed8a843843 by android-jack-team@google.com)).
+        GC overhead limit exceeded.
+        Try increasing heap size with java option '-Xmx<size>'.
+
+        JDK内存溢出的错误
+        解决:java -Xmx3000M -Xms1500M -XshowSettings:all
+<adb>
+
+    adb kill-server     结束服务
+    adb start-server    开始服务
+    adb devices         查看连接的设备
+    adb shell           进入模拟器的shell模式
+    adb root            获取设备权限
+    adb remount         重新挂载系统分区,使系统分区重新可写
+    adb reboot          重启
+
+    adb logcat -v time *:e   查看log信息
+    adb logcat > file        将log信息打印到file文件中
+
+    在framework下修改res文件需要执行一下命令：
+    adb push out/target/product/scx20_sp7731ceb/system/framework/framework-res.apk /system/framework 在项目的根目录下执行
+    adb push可能会报错，执行adb root 、adb remount在重新adb push
+
+    adb logcat > filename log保存在指定文件
+    adb logcat | grep <>  查看指定log
+
+
+    adb shell dumpsys activity services    查看手机运行的service
+    adb shell dumpsys activity             显示activity相关的信息
+    adb shell dumpsys statusbar            显示状态栏相关的信息
+
+    编译：
+    1.命令mm　　　在应用根目录下执行该命令编译app生成apk
+    2.adb install -r
+    . zrevo/envsetup.sh　　　在系统根目录下用该命令初始化系统环境变量
+    make -j32             在系统根目录下用该命令编译系统
+
+    问题：
+        error:derver not found
+    解决：
+        lsusb查看usb连接的设备，创建adb_usb.ini文件，写入连接设备的id,命令：echo 设备id >~/.android/adb_usb.ini
+
+    问题：
+        mm编译生成apk路径，安装apk检测不到设备，显示“waiiting  for devices”，
+    执行：adb kill-start ，adb start-server
+    
+    adb shell dumpsys meminfo 查看手机内存使用情况
+
+<shell>
+    移动和复制
+        mv -f *.png  目的地路径   把当前路径下所有的.png文件强制移动到指定路径，并覆盖同名文件
+        cp -f *.png  目的地路径   把当前路径下所有的.png文件强制复制到指定路径，并覆盖同名文件
+
+<压缩图片>
+    pngquant 256  file.name
+
+<翻墙>
+    lantern 下载地址:https://github.com/getlantern/lantern
+    先安装gdebi-core:
+        sudo apt install gdebi-core
+    然后在lantern安装包目录下
+        sudo gdebi xxx.deb
+
+<CTS>
+    1.服务器上拷贝android-cts文件
+    2.进入android-cts/tools/,执行cts-tradefed脚本文件
+    3.设置手机
+       1).语言设置为English；
+
+       2).测试CTS的时候，设备不能处于休眠状态，进入security选项，将屏幕锁定设置为none 可能不一样，总之是要将锁屏取消；
+
+       3).开启GPS
+
+       4).连接一个可翻墙Wifi网络
+
+       5).开启USB调试，勾选Stay awake，Allow mock locations
+
+       6).安装CtsDeviceAdmin.apk后勾选Device administrators的前两项
+
+       其中，CtsDeviceAdmin.apk位于下载的cts解压包目录下
+
+       android-cts/repository/testcases下.
+    4.aapt放入环境变量中  ide/android-sdk-linux/build-tools/23.0.2    vi .bashrc
+
+    运行android-tools下cts-tradefed
+    输入 l r  查看信息
+    Session  Pass  Fail  Not Executed  Start time           Plan name  Device serial(s)
+    0        92    66    0             2016.11.11_09.33.19  idos
+
+    run cts --disable-reboot --skip-preconditions --continue-session 0(Session)
+    run cts --continue-session 0(Session)
+
+    run cts --plan CTS   测试所有case
+    run cts -p <包名>    测试一个包  参数-p是指测试的是一个package
+        如：run cts -p android.view.cts
+    run cts -c <类名>    测试一个类  类名前需要加上包的名字，参数-c是指测试的是一个class
+        如：un cts -c android.media.cts.AudioTrackTest
+    run cts -c <类名> -m <case名>    测试一个类中的case  case名是指类下的method名，参数-m是指测试的是一个method
+        如：run cts -c android.media.cts.AudioTrackTest -m testPlayStreamData
+
+    若需要循环测试某一个case；则加入loop
+        run cts –c android.media.cts.AudioTrackTest –m testPlayStreamData --loop --min-loop-time 60000
+        60000表示每次循环的的间隔时间，单位为ms；
+    若是
+        run cts –c android.media.cts.AudioTrackTest –m testPlayStreamData --loop
+    则默认是十分钟循环做一次。
+    
+    GTS 测权限
+    gts -m GtsPermissionTestCases -t com.google.android.permission.gts.DefaultPermissionGrantPolicyTest#testDefaultGrants
+    重跑fail项  
+    l r
+
+    run gts --retry session_ID
+
+    <android studio> 下载网址:http://tools.android-studio.org/
+<android>
+
+    状态栏颜色更改　　　<item name="android:statusBarColor">#28a4ec</item>
+
+    fragment:
+        FragmentTransaction addToBackStack(null)  被替换的fragment放入后台栈中
+        FragmentManager popBackStack()        返回带之前被替换的fragment
+
+    注意：FragmentTransaction　使用时再初始化,否则会报错
+
+    fragment之间传递参数使用
+        setArgument(Bundle)  getArgument()
+        Bundle对象包含要传递的数据
+    生命周期的方法除了onCreateView，其他的所有方法如果你重写了，必须调用父类对于该方法的实现
+
+    Fragment与activity之间的通信
+        在一个Fragment中定义一个接口，并声明该接口的成员属性，提供一个初始化成员属性的方法，在activity实现这个接口，当fragment调用接口的方法就实现与activity的通信
+
+    在Fragment生命周期的onCreateView方法中给控件设置监听事件可能会出现无法触发的现象（出现的概率不高），把监听事件在在onActivityCreated方法中设置，可以避免监听事件无法触发
+    RelativeLayout的属性
+        相对于给定ID控件
+            android:layout_above            将该控件置于给定ID控件之上
+            android:layout_below            将该控件置于给定ID控件之下
+            android:layout_toLeftOf         将该控件置于给定ID控件左边
+            android:layout_toRightOf        将该控件置于给定ID控件右边
+            android:layout_alignBaseline    将给控件的基准线和给定ID控件对齐
+            android:layout_alignTop         将该控件和给定ID控件顶部对齐
+            android:layout_alignBottom      将该控件和给定ID控件底部对齐
+            android:layout_alignLeft        将该控件和给定ID控件左对齐
+            android:layout_alignRight       将该控件和给定ID控件右对齐
+
+        相对于父控件
+            android:layout_alignParentTop    是否与父控件顶部对齐
+            android:layout_alignParentBottom 是否与父控件底部对齐
+            android:layout_alignParentLeft   是否与父控件左对齐
+            android:layout_alignParentRight  是否与父控件右对齐
+
+        居中
+            android:layout_centerHorizontal  水平居中
+            android:layout_centerVertical    垂直居中
+            android:layout_centerInParent    置于父控件中央
+
+
+    屏幕适配
+        HVGA(4:3)   480*320    mdpi
+        WVGA(5:3)   800*480    hdpi
+        FWVGA(16:9)  854*480    hdpi
+        QHD(16:9)    960*540    hdpi
+        720P(16:9)   1280*720   xhdpi
+        1080P(16:9)  1920*1080  xxhpi
+
+        AndroidManifest.xml设置
+            android:anyDensity="true"时，程序会分别加载xxhdpi、xhdpi、hdpi、mdpi、Idpi文件夹中的资源，系统会使用最接近的密度文件夹资源，相反，如果设为false ，即使在文件夹下拥有相同资源，程序不会自动去相应文件夹下寻找资源。
+        横竖屏目录区分
+        1）drawable
+          a）drawable-hdpi  该图片适用于横屏，也适用于竖屏
+          b）drawable-land-hdpi  横屏加载此文件
+          c）drawable-port-hdpi  竖屏加载此文件
+        2）layout
+            在res目录下建立layout-port和layout-land两个目录，分别放置竖屏和横屏布局文件,在layout文件中设置控件尺寸采用fill_parent、wrap_content、match_parent和dp，不使用px,字体大小使用sp，使用相对布不使用绝对布局；在程序代码中不要出现具体的像素值，在dimens.xml中定义
+
+    打开、关闭软件盘
+    方法1：(如果输入法在窗口上已经显示，则隐藏，反之则显示)
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.toggleSoftInput(0, InputMethodManager.HIDE_NOT_ALWAYS);
+
+    方法2：
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.showSoftInput(view,InputMethodManager.SHOW_FORCED);      强制打开软键盘
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);       强制关闭软键盘
+
+    boolean isOpen=imm.isActive();//isOpen若为true，则表示输入法打开，否则表示关闭
+
+    EditText  弹出软键盘
+        由于刚跳到一个新的界面，界面未加载完全而无法弹出软键盘。此时应该适当的延迟弹出软键盘
+
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+
+            public void run() {
+                InputMethodManager inputManager = (InputMethodManager) editText.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputManager.showSoftInput(editText, 0);
+            }
+
+        }, 500);
+
+    自定义View常用的方法
+    　　onFinishInflate()                       当view中所有的子控件均被映射成xml后触发
+        onMeasure(int, int)                     确定所有子元素的大小
+        onLayout(boolean, int, int ,int, int)   当view分配子元素的大小和位置时触发
+        onSizeChanged(int, int, int, int)       当view的大小发生变化是触发
+        onDraw(Canvas)                          view渲染内容的细节
+        onFocusChanged(boolean, int, Rect)      当View获取 或失去焦点时触发
+        onTouchEvent(MotionEvent)               触屏事件
+
+    权限问题:
+    android 6.0权限需要用户手动添加，如需要自动添加权限在AndroidManifest加入下面代码
+        android:sharedUserId="android.uid.system"
+        启动Activity加入　: android:windowSoftInputMode="adjustPan|stateHidden"
+        将应用权限提升系统级别
+
+    回调接口的是使用:
+        public class A {
+            public interface IA {
+                public void a();
+            }
+            private IA iA;
+            public void setIA(IA iA) {
+                this.iA = iA;
+            }
+        }
+        public class B implements IA{
+            @Override
+            public void a() {
+                自己的操作
+            }
+            A a = new A();
+            a.setIA(this):
+        }
+        Ａ类声明一个接口，并声明这个接口的属性，提供一个方法给这个属性赋值；Ｂ类实现Ａ类的接口，调用Ａ类赋值的方法,
+        Ａ类使用接口的方法就是Ｂ类重写的方法。
+
+        android:uiOptions="splitActionBarWhenNarrow
+        使menu在UI界面底部显示，与ActionBar分离。
+
+    动态设置View的宽高:
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        view.setLayoutParams(layoutParams);
+
+    activity之间跳转出现闪屏:
+        由activity的theme引起的，解决加入下面属性放入activity的theme中
+        覆盖属性：
+        <item name="android:windowAnimationStyle">@style/Animation</item>
+        写一个name = Animation的style
+        <style name="Animation">
+            <item name="android:activityOpenEnterAnimation">@null</item>
+            <item name="android:activityOpenExitAnimation">@null</item>
+            <item name="android:activityCloseEnterAnimation">@null</item>
+            <item name="android:activityCloseExitAnimation">@null</item>
+            <item name="android:taskOpenEnterAnimation">@null</item>
+            <item name="android:taskOpenExitAnimation">@null</item>
+            <item name="android:taskCloseEnterAnimation">@null</item>
+            <item name="android:taskCloseExitAnimation">@null</item>
+            <item name="android:taskToFrontEnterAnimation">@null</item>
+            <item name="android:taskToFrontExitAnimation">@null</item>
+            <item name="android:taskToBackEnterAnimation">@null</item>
+            <item name="android:taskToBackExitAnimation">@null</item>
+        </style>
+
+        <item name="android:windowDisablePreview">true</item>    取消启动activity闪屏，取消Preview
+
+    ActionBar
+        隐藏ActionBar两种方法：
+        1.xml文件中设置，在style中加入 <item name="windowActionBar">false</item>
+        2.代码中，ActionBar bar = getActionBar();bar.hide();
+
+    <item name="android:stateListAnimator">@null</item>    去掉Button阴影效果
+
+    TextView设置大小写
+    在style全局设置：
+        android:textAllCaps为true 字体大写 false 字体小写
+
+    ListView
+        设置item点击是的颜色：android:listSelector=""
+        监听是否滑到顶部或者底部：
+        listview.setOnScrollListener(new AbsListView.OnScrollListener() {
+
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                if (firstVisibleItem == 0) {
+                    滑到顶部
+                }
+                if ((firstVisibleItem + visibleItemCount ) == totalItemCount) {
+                    滑到底部
+                }
+            }
+        });
+
+    Dialog
+        dialog监听menu键：
+        dialog.setOnkeyListener(new DialogInterface.OnKeyListener() {
+            @Override
+            public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+            if (keyCode == KeyEvent.KEYCODE_MENU &&
+                    event.getAction() == KeyEvent.ACTION_UP && dialog.isShowing()) {
+                dialog.dismiss();
+             }
+                return false;
+
+            }
+        })
+
+    字体Typeface
+        Typeface type = Typeface.createFromAsset(getAssets(),"fonts/OOSPin-Regular1.ttf");
+        Typeface type = Typeface.create("oos-pin", Typeface.NORMAL);
+
+    自定义View
+        重写onMeasure()时根据模式不同进行尺寸计算
+        onMeasure传入的两个参数是由上一层控件传入的大小，有多种情况，重写该方法时需要对计算控件的实际大小，
+                然后调用setMeasuredDimension(int, int)设置实际大小
+
+        onMeasure传入的widthMeasureSpec和heightMeasureSpec不是一般的尺寸数值，而是将模式和尺寸组合在一起的数值。
+                我们需要通过int mode = MeasureSpec.getMode(widthMeasureSpec)得到模式，
+                用int size = MeasureSpec.getSize(widthMeasureSpec)得到尺寸
+
+        模式mode有三种情况：
+        MeasureSpec.EXACTLY是精确尺寸，当我们将控件的layout_width或layout_height指定为具体数值时或者MATCH_PARENT
+                如andorid:layout_width="50dip"，或者为FILL_PARENT是，都是控件大小已经确定的情况，都是精确尺寸。
+
+        MeasureSpec.AT_MOST是最大尺寸，当控件的layout_width或layout_height指定为WRAP_CONTENT时，
+                控件大小一般随着控件的子空间或内容进行变化，此时控件尺寸只要不超过父控件允许的最大尺寸即可。
+                因此，此时的mode是AT_MOST，size给出了父控件允许的最大尺寸。
+
+        MeasureSpec.UNSPECIFIED是未指定尺寸，这种情况不多，一般都是父控件是AdapterView，通过measure方法传入的模式。
+
+    CursorLoader
+        通过LoaderManager.LoaderCallbacks接口来在适当的时候提供查询配置或者利用查询返回到的结果
+        public interface LoaderCallbacks<D> {
+            public Loader<D> onCreateLoader(int id, Bundle args);
+            public void onLoadFinished(Loader<D> loader, D data);
+            public void onLoaderReset(Loader<D> loader);
+        }
+        第一个方法onCreateLoader是创建Loader时候调用，是为了提供查询的配置，比如查询地址，查询项目等。
+            返回值是Loader，Loader执行查询的操作
+            这个方法会在loader初始化也就是注册这个接口的时候调用，常见代码如下：
+            getLoaderManager().initLoader(0, null, this);
+            第一个参数是当前activity里面loader的ID，一般为0，第二个参数一般置null，第三个就是实现了LoaderManager.LoaderCallbacks的类
+            这句代码执行之后就会执行onCreateLoader，然后去查询，查询结束之后就会执行onLoadFinished，做你需要做的事情。
+        一般就在第二个方法里面利用查询结果
+        第三个方法onLoaderReset是在我们的配置发生变化的，使用restartLoader(int , Bundle ,LoaderManager.LoaderCallbacks<D>)方法
+            重新初始化loader之后调用的，一般是用来释放对前面loader查询到的结果引用
+
+
+    Widget
+        Widget的实现思路
+        (1) 在AndroidManifest中声明AppWidget;
+        (2) 在xml目录中定义AppWidget的配置文件;
+        (3) 在layout目录中定义Widget的布局文件;
+        (4) 新建一个类，继承AppWidgetProvider类，实现具体的widget业务逻辑.
+
+        AppWidgetProvider实际上就是一个BroadcastReceiver，它能接收widget相关的广播，例如 widget 的更新、删除、开启和禁用等
+        所以要在AndroidManifest文件中注册这个广播
+        <action  android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+
+        注意添加 <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget"/> 否则不显示
+
+        在xml文件中配置widget
+        <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+            android:minWidth="@dimen/min_digital_widget_width"
+            android:minHeight="@dimen/min_digital_widget_height"
+            android:minResizeWidth="@dimen/min_digital_widget_width"
+            android:minResizeHeight="@dimen/min_digital_widget_height"
+            android:updatePeriodMillis="0"
+            android:previewImage="@drawable/appwidget_digital_clock"
+            android:initialLayout="@layout/digital_appwidget"
+            android:resizeMode="vertical|horizontal"
+            android:widgetCategory="keyguard|home_screen"
+            >
+        </appwidget-provider>
+
+        minWidth 和minHeight
+            它们指定了App Widget布局需要的最小区域。
+                App Widgets所在窗口的桌面位置基于有确定高度和宽度的单元网格中。如果App Widget的最小长度或宽度和这些网格单元的尺寸不匹配，
+                    那么这个App Widget将上舍入（上舍入即取比该值大的最接近的整数——译者注）到最接近的单元尺寸。
+            注意：app widget的最小尺寸，不建议比 “4x4” 个单元格要大。
+
+            单元格个数    单元格个数对应的设置大小 (dp)
+            (行 / 列)       (minWidth / minHeight)
+                1                   40dp
+                2                   110dp
+                3                   180dp
+                4                   250dp
+                …                   …
+                n                   70 × n − 30
+
+        minResizeWidth 和 minResizeHeight
+            它们属性指定了widget的最小绝对尺寸。也就是说，如果widget小于该尺寸，便会因为变得模糊、看不清或不可用。
+                使用这两个属性，可以允许用户重新调整widget的大小，使widget的大小可以小于minWidth和minHeight。
+              注意：(01) 当minResizeWidth的值比minWidth大时，minResizeWidth无效；当resizeMode的取值不包括horizontal时，minResizeWidth无效。
+                    (02) 当minResizeHeight的值比minHeight大时，minResizeHeight无效；当resizeMode的取值不包括vertical时，minResizeHeight无效。
+
+        updatePeriodMillis
+            它定义了widget的更新频率。实际的更新时机不一定是精确的按照这个时间发生的。建议更新尽量不要太频繁，最好是低于1小时一次。
+                或者可以在配置Activity里面供用户对更新频率进行配置。 实际上，当updatePeriodMillis的值小于30分钟时，
+                系统会自动将更新频率设为30分钟！
+            注意: 当更新时机到达时，如果设备正在休眠，那么设备将会被唤醒以执行更新。如果更新频率不超过1小时一次，那么对电池寿命应该不会造成多大的影响。
+                如果你需要比较频繁的更新，或者你不希望在设备休眠的时候执行更新，那么可以使用基于alarm的更新来替代widget自身的刷新机制。
+                将alarm类型设置为ELAPSED_REALTIME或RTC，将不会唤醒休眠的设备，同时请将updatePeriodMillis设为0。
+
+        initialLayout
+            指向widget的布局资源文件
+            注意:使用的组件必须是RemoteViews所支持的,目前原生API中支持的组件如下：
+            FrameLayout
+            LinearLayout
+            RelativeLayout
+            AnalogClock
+            Button
+            Chronmeter
+            ImageButton
+            ImageView
+            ProgressBar
+            TextView
+            TextClock
+            如果使用了除此之外的组件，则在Widget创建时会导致android.view.InflateExceptionn异常。
+
+        android:initialKeyguardLayout    在锁屏添加widget时指向的布局资源文件
+
+        configure
+            可选属性，定义了widget的配置Activity。如果定义了该项，那么当widget创建时，会自动启动该Activity。
+            AndroidManifest.xml中该Activity下提供一个action为android.appwidget.action.APPWIDGET_CONFIGURE 的IntenFilter.
+            注意:
+            如果设置了Configure属性，则必须在指定的Activity中进行如下处理：
+            1.在onCreate中setContentView()函数前添加
+                Intent intent = getIntent();
+                Bundle extras = intent.getExtras();
+                if (extras != null) {
+                    int widgetid = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, -1);//从intent中得出widgetid
+                    //通知 appwdiget 的配置已取消
+                    Intent reslut = new Intent();
+                    reslut.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetid);
+                    setResult(RESULT_CANCELED, reslut);
+                }
+            这样如果在Activity初始化完成前按下了BACK按键，则Widget不会启动；
+            2.在setContentView()函数之后（不一定要在onCreate中，在Activity退出前即可），添加如下设置以指定需要启动的Widget：
+                Intent intent = getIntent();
+                Bundle extras = intent.getExtras();
+                if (extras != null) {
+                    int widgetid = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, -1);//从intent中得出widgetid
+                    //通知 appwdiget 的配置已完成
+                    Intent reslut = new Intent();
+                    reslut.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetid);
+                    setResult(RESULT_OK, reslut);
+                    finish();
+                }
+            否则会导致退出Activity后Widget不启动。
+
+        previewImage
+            指定预览图，该预览图在用户选择widget时出现，如果没有提供，则会显示应用的图标。
+                该字段对应在AndroidManifest.xml中receiver的android:previewImage 字段。由Android3.0引入。
+
+        resizeMode
+            指定了widget的调整尺寸的规则。可取的值有: "horizontal", "vertical", "none"。"horizontal"意味着widget可以水平拉伸，
+            “vertical”意味着widget可以竖值拉伸，“none”意味着widget不能拉伸；默认值是"none"。Android 3.1 引入。
+
+          widgetCategory
+            指定了widget能显示的地方：能否显示在home Screen 或 lock screen 或 两者都可以。它的取值包括："home_screen" 和 "keyguard"。Android 4.2 引入。
+
+
+    判断SD是否存在
+        private boolean isSd() {
+            File f = new File("/storage");
+            File[] fs = f.listFiles();
+            int num = fs.length;
+            String path = fs[0].getAbsolutePath();
+            if ("/storage/emulated".equals(path)) {
+                    return false;
+                }
+            return true;
+        }
+
+    getRootDirectory():是手机内存目录
+    getExternalStorageDirectory():是内存卡目录
+    Context.getFilesDir():本app安装目录
+
+    AndroidManifest
+    application属性
+        android:supportsRtl="true"     声明你的application是否愿意支持从右到左的布局  API 17以后才有这个属性
+
+    ViewPager  滑动变色
+        LinearLayout main ;  ViewPager所在的布局
+        int colors [] = {Color.TRANSPARENT, Color.RED, Color.BLUE, Color.GREEN}; 颜色数组
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                //得 颜 估值器
+                ArgbEvaluator evaluator = new ArgbEvaluator();
+
+                //给布局设置初始颜色
+                main.setBackgroundColor(colors[position]);
+
+                //计算不同页面的结束颜色，最后一张的颜色是第一个颜色，其他的分别加一
+                int endColor = position == colors.length-1 ? colors[0] : colors[position+1];
+
+                //根据positionOffset得到渐变色，因为positionOffset本身为0~1之间的小数所以无需多做处理了
+                int evaluate = (Integer) evaluator.evaluate(positionOffset, colors[position], endColor);
+
+                //最后设置渐变背景色给布局
+                main.setBackgroundColor(evaluate);
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+    });
+
+    android.permission.WRITE_MEDIA_STORAGE     对SD的权限 新建文件夹
+
+
+    Notification.contentView         对应默认布局（小布局）
+    Notification.bigContentView      对应大布局
+
+    SearchView
+        改变样式：
+            int textId = getResources().getIdentifier("android:id/search_src_text", null, null);
+            SearchView.SearchAutoComplete textView = (SearchView.SearchAutoComplete) mSearchView.findViewById(textId);
+
+            int viewId = getResources().getIdentifier("android:id/search_edit_frame", null, null);
+            View view = mSearchView.findViewById(viewId);
+            view.setBackground(getResources().getDrawable(R.drawable.search_bg_funui));
+
+            int searchId = getResources().getIdentifier("android:id/search_mag_icon", null, null);
+            ImageView search = (ImageView) mSearchView.findViewById(searchId);
+            search.setImageDrawable(getResources().getDrawable(R.drawable.ic_search_mag));
+
+            int closeId = getResources().getIdentifier("android:id/search_close_btn", null, null);
+            ImageView close = (ImageView) mSearchView.findViewById(closeId);
+            close.setImageDrawable(getResources().getDrawable(R.drawable.ic_search_close));
+
+        改变光标颜色：
+            try {
+                java.lang.reflect.Field mCursorDrawableRes = TextView.class.getDeclaredField("mCursorDrawableRes");
+                mCursorDrawableRes.setAccessible(true);
+                mCursorDrawableRes.set(textView, R.drawable.cursor_color);
+            } catch (Exception e){
+
+            }
+        //drawable/cursor_color.xml
+        <?xml version="1.0" encoding="utf-8"?>
+        <shape xmlns:android="http://schemas.android.com/apk/res/android"
+            android:shape="rectangle" >
+            <solid android:color="#ffffff" />
+            <size android:width="1dp" />
+        </shape>
+
+    PreferenceFragment 修改ListView分割线
+        @Override
+        public void onActivityCreated(Bundle savedInstanceState) {
+            super.onActivityCreated(savedInstanceState);
+            getListView().setDivider(new android.graphics.drawable.ColorDrawable(0xffe5e5e5));//分割线的颜色
+            getListView().setDividerHeight(1);//分割线的高度
+        }
+
+    PreferenceActivity 中 可以直接getListView()得到ListView
+
+    权限：
+        private static final int REQUEST_EXTERNAL_STORAGE = 1;
+        private static String[] PERMISSIONS_STORAGE = {Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE };
+
+        private void addPremisson() {
+            int permission = ActivityCompat.checkSelfPermission(OpenVcalendar.this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE);
+
+            if (permission != PackageManager.PERMISSION_GRANTED) {
+                if (!shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                    new AlertDialog.Builder(this)
+                        .setMessage(R.string.import_vcalendar)
+                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener(){
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                ActivityCompat.requestPermissions(OpenVcalendar.this, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
+                                }
+                                })
+                    .setNegativeButton(android.R.string.cancel, null)
+                        .create()
+                        .show();
+                    return;
+                }
+                ActivityCompat.requestPermissions(OpenVcalendar.this, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
+            }
+        }
+        http://blog.csdn.net/yangqingqo/article/details/48371123
+
+
+    添加内置音乐
+    LOCAL_PATH := $(call my-dir)
+
+    include $(CLEAR_VARS)
+    LOCAL_MODULE := xxx  (name)
+    LOCAL_MODULE_TAGS := optional
+    LOCAL_SRC_FILES := $(LOCAL_MODULE).mp3
+    LOCAL_MODULE_CLASS := ETC  (apps)
+    LOCAL_MODULE_SUFFIX := .mp3
+    LOCAL_MODULE_PATH := $(TARGET_OUT_DATA)/media
+    include $(BUILD_PREBUILT)
+    http://blog.csdn.net/qq_27062249/article/details/52819432
+
+    TextView
+        android:letterSpacing="0.15"    字体的间距 值是一个浮点数，为标准字体的倍数作为间距
+        android:textAllCaps="true"      true 字体大写   false 字体正常格式
+
+    编译ICU资源
+    1.  在 external\icu4c\source下新建临时目录icuBuild,进入临时目录icuBuild
+    2.  执行runConfigureICU Linux     $.././runConfigureICU Linux
+    3.  执行make -j2命令
+    将生成的icuxxl.dat push  到手机  system/usr/icu
+
+    1.  进入external/icu/icu4c/source目录下执行./runConfigureICU Linux
+        然后执行  make  INCLUDE_UNI_CORE_DATA=1
+    2.  将第一步生成的external/icu/icu4c/source/data/out/tmp/icudtxxl.dat复制到external/icu/icu4c/source/stubdata下(覆盖)
+    3.  重新编译工程
+
+    android 7.0 目录被限制访问
+        私有文件的文件权限不在放权给所有的应用，使用 MODE_WORLD_READABLE 或 MODE_WORLD_WRITEABLE 进行的操作将触发 SecurityException
+        http://www.jianshu.com/p/56b9fb319310
+
+    LinearLayout  设置分割
+    android:divider=""
+    android:showDividers = "middle|end|beginning|none"
+
+    <?xml version="1.0" encoding="utf-8"?>
+    <shape xmlns:android="http://schemas.android.com/apk/res/android">
+        <solid android:color="@color/account_line" />
+        <size android:height="1px" />
+    </shape>
+
+    middle 在每一项中间添加分割线
+
+    end 在整体的最后一项添加分割线
+
+    beginning 在整体的最上方添加分割线
+
+    none 无
+
+    Activity背景显示桌面的主题
+        WallpaperManager wpm = WallpaperManager.getInstance(getApplicationContext());
+        getWindow().getDecorView().setBackground(wpm.getDrawable());
+
+    关机充电显示的logo图片位置
+        MTK:vendor/mediatek/proprietary/bootable/bootloader/lk/dev/logo/wvga/wvga_low_battery.bmp
+
+
+    android:layoutDirection="ltr" 布局从左到右
+    android:layoutDirection="rtl" 布局从右到左
+
+    长按监听
+    GestureDetectorCompat mDetector= new GestureDetectorCompat(mContext, new MyGestureListener());
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        mDetector.onTouchEvent(event);
+        return super.dispatchTouchEvent(event);
+    }
+
+    class MyGestureListener extends GestureDetector.SimpleOnGestureListener {  
+
+    public void onLongPress(MotionEvent e) {
+        Intent intent = new Intent("android.intent.action.function");
+        mContext.startActivity(intent);
+        Vibrator vibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
+        vibrator.vibrate(50);
+    }
+
+}
+    TextView   跑马灯显示
+        mSongName.setText(mService.getTrackName());
+        mSongName.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
+        mSongName.setSingleLine(true);
+        mSongName.setSelected(true);
+        mSongName.setFocusable(true);
+        mSongName.setFocusableInTouchMode(true);
+
+    CTS 跳过某个包名
+    frameworks/base/core/java/android/app/ApplicationPackageManager.java
+        如 Eleven :
+        @Override
+        public int checkPermission(String permName, String pkgName) {
+            try {
+/* Thinkgo:niuzhuang on: Fri, 17 Nov 2017 11:20:31 +0800
+ */
+                String taker = mContext.getPackageName();
+                if ("com.google.android.permission.gts".equals(taker)) {
+                    String[] whiteLists = new String[] {"com.cyanogenmod.eleven"};
+                    for (String pkg : whiteLists) {
+                        if (pkg.equals(pkgName)) {
+                            return PERMISSION_DENIED;
+                        }
+                    }
+                }
+// End of Thinkgo:niuzhuang
+                return mPM.checkPermission(permName, pkgName, mContext.getUserId());
+            } catch (RemoteException e) {
+                throw e.rethrowFromSystemServer();
+            }
+        }
+
+    本应用判断其它应用是否有某个权限:
+    例如:在FM中判断音乐是否有存储权限
+    try {  
+        PackageManager pm = getPackageManager();
+        boolean permission = (PackageManager.PERMISSION_GRANTED ==
+                pm.checkPermission("android.permission.READ_EXTERNAL_STORAGE", "com.android.music"));
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    permission  true music有存储权限  false music没有存储权限
+
+    判断SD是否存在
+    Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())SD存在
+    !Environment.isExternalStorageRemovable() SD卡不可被移除
+
