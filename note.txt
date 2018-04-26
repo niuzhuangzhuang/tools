@@ -39,6 +39,9 @@
 
     git clean -fd    清除暂存区的文件
 
+    git stash
+    git stash pop
+
     git fetch
     git rebase       使版本更新到最新
 
@@ -113,13 +116,17 @@
             3)最近一次提交节点的patch ：git format-patch HEAD^
 
             git专门的patch直接通过git am命令merge即可
-            
+
             git clone ssh://think@20.1.1.108:~/hdd/think/360sync/fw556/miki/.git
 
 
 <github>
 创建仓库：
 http://blog.csdn.net/p10010/article/details/51336332
+
+<ssh>
+    报错:Agent admitted failure to sign using the key
+    解决:执行命令 ssh-add (没有空格)
 
 <repo>
     repo init 下载repo并克隆manifest  例：repo init -u doker:mocor_sc9832/manifest
@@ -181,7 +188,7 @@ http://blog.csdn.net/p10010/article/details/51336332
 
         zip命令     解压：unzip filename.zip
                     压缩：zip filename.zip Dirname
-                          zip -r filename.zip ./* 
+                          zip -r filename.zip ./*
 
         7z命令      解压：7z e filename.7z(解压到当前目录下)
                           7z x filename.7z(解压到压缩包名的目录下)
@@ -267,6 +274,21 @@ http://blog.csdn.net/p10010/article/details/51336332
 
         JDK内存溢出的错误
         解决:java -Xmx3000M -Xms1500M -XshowSettings:all
+
+    tail -f 输出文件的内容
+
+<安装MySQL>
+    sudo apt-get install mysql-server
+    apt-get isntall mysql-client
+    sudo apt-get install libmysqlclient-dev
+
+    安装完成之后可以使用如下命令来检查是否安装成功：
+        sudo netstat -tap | grep mysql
+
+    登陆mysql数据库可以通过如下命令：
+        mysql -u root -p
+        -u 表示选择登陆的用户名， -p 表示登陆的用户密码，上面命令输入之后会提示输入密码，此时输入密码就可以登录到mysql。
+
 <adb>
 
     adb kill-server     结束服务
@@ -292,6 +314,8 @@ http://blog.csdn.net/p10010/article/details/51336332
     adb shell dumpsys activity             显示activity相关的信息
     adb shell dumpsys statusbar            显示状态栏相关的信息
 
+    adb shell wm density 查看屏幕密度
+
     编译：
     1.命令mm　　　在应用根目录下执行该命令编译app生成apk
     2.adb install -r
@@ -306,7 +330,7 @@ http://blog.csdn.net/p10010/article/details/51336332
     问题：
         mm编译生成apk路径，安装apk检测不到设备，显示“waiiting  for devices”，
     执行：adb kill-start ，adb start-server
-    
+
     adb shell dumpsys meminfo 查看手机内存使用情况
 
 <shell>
@@ -316,6 +340,9 @@ http://blog.csdn.net/p10010/article/details/51336332
 
 <压缩图片>
     pngquant 256  file.name
+
+<github 汉化>
+    https://github.com/52cik/github-hans
 
 <翻墙>
     lantern 下载地址:https://github.com/getlantern/lantern
@@ -367,16 +394,24 @@ http://blog.csdn.net/p10010/article/details/51336332
     若是
         run cts –c android.media.cts.AudioTrackTest –m testPlayStreamData --loop
     则默认是十分钟循环做一次。
-    
+
     GTS 测权限
     gts -m GtsPermissionTestCases -t com.google.android.permission.gts.DefaultPermissionGrantPolicyTest#testDefaultGrants
-    重跑fail项  
+    重跑fail项
     l r
 
     run gts --retry session_ID
 
     <android studio> 下载网址:http://tools.android-studio.org/
 <android>
+
+    修改默认时间格式为24H
+        frameworks/base/packages/SettingsProvider/res/values/defaults.xml
+            添加: frameworks/base/packages/SettingsProvider/res/values/defaults.xml
+
+        frameworks/base/packages/SettingsProvider/src/com/android/providers/settings/DatabaseHelper.java
+            loadSystemSettings(SQLiteDatabase db)方法中添加
+            loadStringSetting(stmt, Settings.System.TIME_12_24, R.string.time_12_24);
 
     状态栏颜色更改　　　<item name="android:statusBarColor">#28a4ec</item>
 
@@ -930,7 +965,7 @@ http://blog.csdn.net/p10010/article/details/51336332
         return super.dispatchTouchEvent(event);
     }
 
-    class MyGestureListener extends GestureDetector.SimpleOnGestureListener {  
+    class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
 
     public void onLongPress(MotionEvent e) {
         Intent intent = new Intent("android.intent.action.function");
@@ -974,7 +1009,7 @@ http://blog.csdn.net/p10010/article/details/51336332
 
     本应用判断其它应用是否有某个权限:
     例如:在FM中判断音乐是否有存储权限
-    try {  
+    try {
         PackageManager pm = getPackageManager();
         boolean permission = (PackageManager.PERMISSION_GRANTED ==
                 pm.checkPermission("android.permission.READ_EXTERNAL_STORAGE", "com.android.music"));
@@ -986,4 +1021,64 @@ http://blog.csdn.net/p10010/article/details/51336332
     判断SD是否存在
     Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())SD存在
     !Environment.isExternalStorageRemovable() SD卡不可被移除
+
+    /**
+     * 把Assets中zip拷贝到临时目录下（缓存）
+     * @param context
+     * @param fileName 需要拷贝的zip文件名
+     * @return 临时文件的绝对路径
+     */
+    public static String copyFileFromAssets(Context context, String fileName) {
+        BufferedInputStream in = null;
+        BufferedOutputStream out = null;
+        byte b[] = new byte[1024];
+        String cachePath = context.getCacheDir().getAbsolutePath();
+        File file = new File(cachePath + "/" + fileName);
+        try {
+            if (file.exists()) {
+                file.delete();
+            }
+            InputStream input = context.getAssets().open(fileName);
+            in = new BufferedInputStream(input);
+            out = new BufferedOutputStream(new FileOutputStream(file));
+            int read = 0;
+            while ((read = in.read(b)) > 0) {
+                out.write(b, 0, read);
+            }
+            out.flush();
+            in.close();
+            out.close();
+            input.close();
+            return file.getAbsolutePath();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+        }
+        return null;
+    }
+
+    /**
+     * 不解压读取zip文件
+     * @param context
+     * @return
+     */
+    public static List<String> readZip(Context context, String fileName) {
+        List<String> list = new ArrayList<String>();
+        try {
+            Charset gbk = Charset.forName("GBK");
+            ZipFile zipFile = new ZipFile(fileName);
+            Enumeration<?> zipEntrys = zipFile.entries();
+            while (zipEntrys.hasMoreElements()) {
+                ZipEntry zip = (ZipEntry) zipEntrys.nextElement();
+                String name = zip.getName();
+                list.add(name);
+                if (name.endsWith(".png")) {
+                    Bitmap result = new BitmapDrawable(context.getResources(), zipFile.getInputStream(zip)).getBitmap();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 
