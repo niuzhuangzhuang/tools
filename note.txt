@@ -1082,3 +1082,5 @@ http://blog.csdn.net/p10010/article/details/51336332
         return list;
     }
 
+android 8.0 静态注册广播，发送广播需要intent.setPackage(getPackageName());
+    原因:谷歌在8.0后为了提高效率，删除了静态注册，防止关闭App后广播还在， 造成内存泄漏， 现在静态注册的广播需要指定包名，而动态注册就没有这个问题
