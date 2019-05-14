@@ -277,6 +277,8 @@ http://blog.csdn.net/p10010/article/details/51336332
 
     tail -f 输出文件的内容
 
+    编译p8mini    ./zprojects/scripts/am p389bf-zwx-c1685dxa-c1685dxaop
+
 <安装MySQL>
     sudo apt-get install mysql-server
     apt-get isntall mysql-client
