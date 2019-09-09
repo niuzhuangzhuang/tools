@@ -120,6 +120,36 @@
             git clone ssh://think@20.1.1.108:~/hdd/think/360sync/fw556/miki/.git
 
 
+	git format-patch //保存commit信息
+
+	    git format-patch HEAD^ 　　　　　　　　　　　　　   #生成最近的1次commit的patch
+	    git format-patch HEAD^^　　　　　　　　　　　　　  #生成最近的2次commit的patch
+	    git format-patch HEAD^^　　　　　　　　　　　　　  #生成最近的2次commit的patch
+	    git format-patch <r1>..<r2>                                              #生成两个commit间的修改的patch（包含两个commit. <r1>和<r2>都是具体的commit号)
+	    git format-patch -1 <r1>                                                   #生成单个commit的patch
+	    git format-patch <r1>                                                       #生成某commit以来的修改patch（不包含该commit）
+	    git format-patch --root <r1>　　　　　　　　　　　　   #生成从根到r1提交的所有patch
+
+	git am //
+	    git apply --stat 0001-limit-log-function.patch   　　　　  # 查看patch的情况
+	    git apply --check 0001-limit-log-function.patch   　　　  # 检查patch是否能够打上，如果没有任何输出，则说明无冲突，可以打上
+	    (注：git apply是另外一种打patch的命令，其与git am的区别是，git apply并不会将commit message等打上去，打完patch后需要重新git add和git commit，而git am会直接将patch的所有信息打上去，而且不用重新git add和git commit,author也是patch的author而不是打patch的人)
+	    git am 0001-limit-log-function.patch                                # 将名字为0001-limit-log-function.patch的patch打上
+	    git am --signoff 0001-limit-log-function.patch                  # 添加-s或者--signoff，还可以把自己的名字添加为signed off by信息，作用是注明打patch的人是谁，因为有时打patch的人并不是patch的作者
+	    git am ~/patch-set/*.patch　　　　　　　　　　　　　# 将路径~/patch-set/*.patch 按照先后顺序打上
+	    git am --abort                                                                   # 当git am失败时，用以将已经在am过程中打上的patch废弃掉(比如有三个patch，打到第三个patch时有冲突，那么这条命令会把打上的前两个patch丢弃掉，返回没有打patch的状态)
+	    git am --resolved                                                             #当git am失败，解决完冲突后，这条命令会接着打patch
+
+	    https://www.cnblogs.com/ArsenalfanInECNU/p/8931377.html     //参考网站
+
+	如何打patch 及git 打patch 失败的处理方法   https://blog.csdn.net/RonnyJiang/article/details/54342871
+
+	    使用git am 0001-limit-log-function.patch 出现error
+	    1）git apply .git/rebase-apply/0001 --reject
+	    2）解决冲突
+	    3）git am --resolved
+
+
 <github>
 创建仓库：
 http://blog.csdn.net/p10010/article/details/51336332
@@ -1086,3 +1116,27 @@ http://blog.csdn.net/p10010/article/details/51336332
 
 android 8.0 静态注册广播，发送广播需要intent.setPackage(getPackageName());
     原因:谷歌在8.0后为了提高效率，删除了静态注册，防止关闭App后广播还在， 造成内存泄漏， 现在静态注册的广播需要指定包名，而动态注册就没有这个问题
+
+
+mk 文件
+    $(shell mkdir -p system/txz/resource) 创建目录
+	PRODUCT_COPY_FILES += \
+        device/fsl/sabresd_6dq/txz/ResHolder.apk:system/txz/resource/ResHolder.apk  拷贝文件
+
+	LOCAL_MODULE_PATH = $(PRODUCT_OUT)/system/txz/resource/   apk生成的目录
+
+监听navigation
+    View view = getWindow().getDecorView();
+    view.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
+            @Override
+             public void onSystemUiVisibilityChange(int visibility) {
+                 if ((visibility & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) == 0) {
+                     view.setVisibility(View.VISIBLE);
+                 } else {//隐藏
+                     view.setVisibility(View.GONE);
+                 }
+             }
+         });
+
+
+Android.mk   include $(call all-makefiles-under,$(LOCAL_PATH))   可以编译子目录的Android.mk
