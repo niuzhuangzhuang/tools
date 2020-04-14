@@ -30,6 +30,7 @@
 
     git  diff        查看上次提交后做了什么，比较当前提交和最新提交之间的差异
     git  show        显示最后一次修改的内容
+    git  show  --stat      显示最后一次修改的文件目录
 
     git log          查看提交历史
     git log -p       显示 每次提交之间的差异
@@ -44,6 +45,8 @@
 
     git fetch
     git rebase       使版本更新到最新
+
+    git remote prune origin  更新本地分支
 
     git merge   <分支名>　　合并分支
 
@@ -148,6 +151,11 @@
 	    1）git apply .git/rebase-apply/0001 --reject
 	    2）解决冲突
 	    3）git am --resolved
+
+    修改远程分支名字:
+        git branch -m old_branch new_branch            //重命名
+	git push origin :old_branch                    //删除旧分支
+	git push --set-upstream origin new_branch      //提交新分支
 
 
 <github>
@@ -293,6 +301,7 @@ http://blog.csdn.net/p10010/article/details/51336332
     mmm 应用路径　　　　　　　 项目根目录下执行编译app生成apk
     mmm                        在应用根目录下执行编译app生成apk
     make update-api            更新api
+    make snod                  重新生成system.img
 
     chmod a+x          添加脚本权限
     ./                 执行脚本

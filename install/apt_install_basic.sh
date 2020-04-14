@@ -48,3 +48,4 @@ apt-get install -y ckermit
 apt-get install -y phatch-cli
 apt-get install -y expect
 apt-get purge -y nano
+sudo apt install lzop
