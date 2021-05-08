@@ -1,0 +1,23 @@
+[color]
+        diff = true
+        status = true
+        branch = true
+[color "diff"]
+[alias]
+        rr = reset HEAD
+        br = branch -av
+        st = status
+        co = checkout
+        ca = commit --amend
+        di = diff
+        dc = diff --cached
+        dh = diff HEAD
+        cp = cherry-pick
+        lg = log --pretty=format:'%h |%an |%ai |%s'
+        lo = log --pretty=format:'%h |%an |%s' --since='4 days ago'
+        oneline = log --pretty=oneline --since='2 days ago'
+        onelog = log -p -1
+        rs = reset --soft HEAD^
+        rh = reset --hard HEAD^
+[push]
+        default = matching

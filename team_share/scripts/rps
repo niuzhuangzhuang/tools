@@ -1,0 +1,14 @@
+#!/bin/bash
+if [ "$1" == "" ]
+then
+    echo "first string is null"
+    exit 0
+fi
+if [ "$2" == "" ]
+then
+    find -type f | xargs grep $1
+    find -type f | xargs grep $1
+    exit 0
+fi
+find -type f | xargs sed -i 's/'$1'/'$2'/g'
+find -type f | xargs sed -i 's/'$1'/'$2'/g'

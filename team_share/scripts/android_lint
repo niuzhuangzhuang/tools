@@ -1,0 +1,144 @@
+#! /usr/bin/env python
+from xml.dom.minidom import parse
+import xml.dom.minidom
+import commands
+import os
+import os.path
+import re
+
+def cleanlayout(alys, ulys):
+    for layout in alys:
+        name = layout.split("/")[-1]
+        ly = name[:name.find(".xml")]
+        if ly not in ulys:
+            print "unused layout is %s" % layout
+            os.system("rm " + layout)
+
+def cleandrawable(adws, udws):
+    for drawable in adws:
+        name = drawable.split("/")[-1]
+        dw = name[:name.find(".xml")]
+        if dw not in udws:
+            print "unused drawable is %s" % drawable
+            os.system("rm " + drawable)
+
+def cleanstyle(asys, usys):
+    for style in asys:
+        if style not in usys:
+            print "unused style is %s" % style
+
+def cleanpngdrawable(apdws, udws):
+    for pngdraw in apdws:
+        name = pngdraw.split("/")[-1]
+        pdw = name[:name.find(".png")]
+        ine = pdw.find(".9")
+        if ine != -1:
+            pdw = pdw[:ine]
+        if pdw not in udws:
+            print "unused pngdrawable is %s" % pngdraw
+            os.system("rm " + pngdraw)
+
+def cleanjpgdrawable(ajdws, udws):
+    for jpgdraw in ajdws:
+        name = jpgdraw.split("/")[-1]
+        jdw = name[:name.find(".jpg")]
+        if jdw not in udws:
+            print "unused jpgdrawable is %s" % jpgdraw
+            os.system("rm " + jpgdraw)
+
+pwd = commands.getstatusoutput("pwd")[1]
+javafiles = []
+xmlfiles = []
+alldrawables = []
+resources = []
+alllayouts = []
+allstyles = []
+allstylenames = []
+allpngdrawables = []
+alljpgdrawables = []
+allpngmipmaps = []
+alljpgmipmaps = []
+
+usedlayouts = []
+useddrawables = []
+usedstyles = []
+usedmipmaps = []
+
+for parent, dirnames, filenames in os.walk(pwd):
+    for filename in filenames:
+        filepath = os.path.join(parent, filename)
+        if filename.endswith(".java"):
+            javafiles.append(filepath)
+        elif filename.endswith(".xml"):
+            xmlfiles.append(filepath)
+            if "/layout" in parent:
+                alllayouts.append(filepath)
+            elif "/values" in parent:
+                resources.append(filepath)
+#if "style" in filepath:
+#DOMTree = xml.dom.minidom.parse(filepath)
+#sty = DOMTree.documentElement.getElementsByTagName("style")
+#allstyles.extend(sty)
+            elif "/drawable" in parent:
+                alldrawables.append(filepath)
+        elif filename.endswith(".png"):
+            if "/drawable" in parent:
+                allpngdrawables.append(filepath)
+            if "/mipmap" in parent:
+                allpngmipmaps.append(filepath)
+        elif filename.endswith(".jpg"):
+            if "/drawable" in parent:
+                alljpgdrawables.append(filepath)
+            if "/mipmap" in parent:
+                alljpgmipmaps.append(filepath)
+
+for xmlfile in xmlfiles:
+    for line in open(xmlfile):
+        lys = re.findall(r'(?<=@layout\/).+?(?=(?:"|<| |\n))', line)
+        for ly in lys:
+            if ly not in usedlayouts:
+                usedlayouts.append(ly)
+        dws = re.findall(r'(?<=@drawable\/).+?(?=(?:"|<| |\n))', line)
+        for dw in dws:
+            if dw not in useddrawables:
+                useddrawables.append(dw)
+        sys = re.findall(r'(?<=@style\/).+?(?=(?:"|<| |\n))', line)
+        for sy in sys:
+            if sy not in usedstyles:
+                usedstyles.append(sy)
+        mps = re.findall(r'(?<=@mipmap\/).+?(?=(?:"|<| |\n))', line)
+        for mp in mps:
+            if mp not in usedmipmaps:
+                usedmipmaps.append(mp)
+
+for javafile in javafiles:
+    for line in open(javafile):
+        lys = re.findall(r'(?<=R.layout\.).+?(?=(?:,| |;|:|}|\n|\)))', line)
+        for ly in lys:
+            if ly not in usedlayouts:
+                usedlayouts.append(ly)
+        dws = re.findall(r'(?<=R.drawable\.).+?(?=(?:,| |;|:|}|\n|\)))', line)
+        for dw in dws:
+            if dw not in useddrawables:
+                useddrawables.append(dw)
+        sys = re.findall(r'(?<=R.style\.).+?(?=(?:,| |;|:|}|\n|\)))', line)
+        for sy in sys:
+            if sy not in usedstyles:
+                usedstyles.append(sy)
+        mps = re.findall(r'(?<=R.mipmap\.).+?(?=(?:,| |;|:|}|\n|\)))', line)
+        for mp in mps:
+            if mp not in usedmipmaps:
+                usedmipmaps.append(mp)
+
+for style in allstyles:
+    name = style.getAttribute("name")
+    if name not in allstylenames:
+        allstylenames.append(name)
+
+#cleanstyle(asys = allstylenames, usys = usedstyles)
+cleanlayout(alys = alllayouts, ulys = usedlayouts)
+cleandrawable(adws = alldrawables, udws = useddrawables)
+cleanpngdrawable(apdws = allpngdrawables, udws = useddrawables)
+cleanjpgdrawable(ajdws = alljpgdrawables, udws = useddrawables)
+cleanpngdrawable(apdws = allpngmipmaps, udws = usedmipmaps)
+cleanjpgdrawable(ajdws = alljpgmipmaps, udws = usedmipmaps)

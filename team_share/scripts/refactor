@@ -1,0 +1,393 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import os
+import pwd
+import commands
+import datetime
+import sys
+from sh import git
+from sh import grep
+
+CODEC = 'utf-8'
+CODEC2 = 'gbk'
+
+###############################################################################
+#                         colorized output
+###############################################################################
+_YELLOW = '\033[93m'
+_GREEN = '\033[92m'
+_RED = '\033[91m'
+_WHITE = '\033[1;37m'
+_END = '\033[0m'
+
+def _color(msg, color):
+    if os.isatty(1) and os.environ['TERM'] == 'xterm':
+        return color + msg + _END
+    else:
+        return msg
+
+
+def _red(msg):
+    return _color(msg, _RED)
+
+
+def _green(msg):
+    return _color(msg, _GREEN)
+
+
+def _yellow(msg):
+    return _color(msg, _YELLOW)
+
+
+def _white(msg):
+    return _color(msg, _WHITE)
+
+build_servers = ["192.168.0.178",]
+VERSION = "eleos2018"
+
+def samba_run(cmd, server, where, needs_output=False):
+    """
+    run cmd on samba server with smbclient under some directory
+    If needs_output, return the result
+    """
+    if len(server) < 5:
+        server = "192.168.0." + server
+    if needs_output:
+        cmd2 = """smbclient -c '%s' //%s/%s/ -U%%""" % (cmd, server, where)
+        return commands.getstatusoutput(cmd2)[1]
+    else:
+        cmd2 = """smbclient -c '%s' //%s/%s/ -U%% > /dev/null 2>&1""" % (cmd, server, where)
+        os.system(cmd2)
+
+def samba_run_d(cmd, server, needs_output=False):
+    """
+    run cmd on samba server with smbclient under dailybuild
+    """
+    return samba_run(cmd, server, "dailybuild", needs_output)
+
+def samba_run_o(cmd, server, needs_output=False):
+    """
+    run cmd on samba server with smbclient under ondemand
+    """
+    return samba_run(cmd, server, "ondemand", needs_output)
+
+def onedemand_build_check_server(server):
+    """
+    For ondemand build, check whether server is free or busy of dead
+    """
+    ret = -1
+    ret2 = ""
+    who = ""
+    when = ""
+    project = ""
+    out = samba_run_d("ls", server, True)
+    if "hb.txt" in out:
+        samba_run_d("get hb.txt hb.txt", server)
+        try:
+            line, = open("hb.txt")
+            if len(line) >= 6:
+                str1 = datetime.datetime.now().strftime("%H%M%S")
+                ret2 = line.strip()
+                diff1 = (int(str1[0:2]) - int(line[0:2])) * 3600
+                diff1 += (int(str1[2:4]) - int(line[2:4])) * 60
+                diff1 += (int(str1[4:6]) - int(line[4:6]))
+                if diff1 < 0:
+                    diff1 = -diff1
+                out2 = samba_run_o("ls", server, True)
+                if "ondemand_doing " in out2:
+                    ret = 1
+                    ret2 = "building"
+                    samba_run_o("get logs.txt logs.txt", server)
+                    one = ""
+                    with open("logs.txt") as inF:
+                        for line in inF:
+                            one = line
+                    pos1 = one.find("-C")
+                    who = one[pos1:].split()[1].replace("Tool_", "")
+                    pos1 = one.find("201")
+                    when = one[pos1+11:pos1+11+8]
+                    pos1 = one.find(" -P ")
+                    project = one[pos1 + 4:].split()[0]
+                    os.remove("logs.txt")
+                elif diff1 < 120:
+                    ret = 1
+                    if "ondemand_build" in out2:
+                        ret = 1
+                        ret2 = "ordered"
+                    else:
+                        ret = 0
+        except ValueError:
+            ret = 1
+            ret2 = "unknown"
+        os.remove("hb.txt")
+    return (ret, ret2, who, when, project)
+
+def onedemand_build_get_free_servers():
+    """
+    For ondemand build, return list of free servers
+    """
+    free_servers = []
+    for server in build_servers:
+        ret = onedemand_build_check_server(server)
+        if ret[0] == 0:
+            print _green('{0:<20}{1:<10}'.format(server, "free"))
+            free_servers.append(server)
+        elif ret[0] == -1:
+            print _red('{0:<20}{1:<10}{2:<15}'.format(server, "dead", ret[1]))
+        elif ret[0] == 1:
+            print _yellow('{0:<20}{1:<10}{2:<25}{3:<10}{4}'.format(server,ret[1],ret[2],ret[3],ret[4]))
+    return free_servers
+
+def trigger_build(ds1):
+    list1 = onedemand_build_get_free_servers()
+    if len(list1) == 0:
+        print "no free servers!"
+        return False
+    #generate ondemand
+    with open("ondemand_build","w") as outfile1:
+        temp = sys.stdout
+        sys.stdout = outfile1
+        print "version:%s" % VERSION
+        for one in ("committer", "project", "mode"):
+            print "%s:%s" % (one, ds1[one])
+        if ds1["quick"]:
+            print "quick"
+        sys.stdout = temp
+
+    #trigger
+    print "will build {} on {}".format(ds1["project"], list1[0])
+    samba_run_o("rm ondemand_build*", list1[0])
+    samba_run_o("put ondemand_build ondemand_build", list1[0])
+    os.remove("ondemand_build")
+    return True
+
+def is_project_exist(project_name):
+    projects_info = get_projects_info()
+    if projects_info.has_key(project_name):
+        return True
+    print _red("Error : Wrong project name! should be one of:")
+    show_projects()
+    return False
+
+def is_mode_exist(mode):
+    if not mode in ("user", "userdebug", "eng"):
+        print _red("Error : Wrong project mode! should be one of:")
+        show_modes()
+        return False
+    return True
+
+def get_project_info_by_name(project_name):
+    projects_info = get_projects_info()
+    if projects_info.has_key(project_name):
+        return projects_info[project_name]
+    print _red("Error : Wrong project name! should be one of:")
+    show_projects()
+    return None
+
+def get_projects_info():
+    projects_info = {}
+    if not os.path.exists("/tmp/projects_info.txt"):
+        out = samba_run_d("ls", build_servers[0], True)
+        if "projects_info.txt" in out:
+            samba_run_d("get projects_info.txt /tmp/projects_info.txt", build_servers[0])
+        else:
+            print _red("Error : find no projects_info.txt in dailybuild")
+    if os.path.exists("/tmp/projects_info.txt"):
+        with open("/tmp/projects_info.txt") as myfile:
+            project = ""
+            for line in myfile:
+                if "#" in line:
+                    continue
+                line2 = line.strip().split(":")
+                if len(line2) < 2:
+                    continue
+                if line2[0] == "project":
+                    project = line2[1]
+                    projects_info[project] = {}
+                else:
+                    projects_info[project][line2[0]] = line2[1]
+    return projects_info
+
+LIST_TO_COPY_APKS = (
+    "BarcodeWidgetPage/BarcodeWidgetPage.apk",
+    "BuiltFile/BuiltFile.apk",
+    "Calculator/CalculatorOphone.apk",
+    "Calendar/CalendarOphone.apk",
+    "DeskClock/DeskClockOphone.apk",
+    "DocumentsUI/DocumentsUIOphone.apk",
+    "Eleven/Eleven.apk",
+    "FMRadio/FMRadioOphone.apk",
+    "GalleryNewOphone/GalleryNewOphone.apk",
+    "MusicWidgetPage/MusicWidgetPage.apk",
+    "Note/NoteOphone.apk",
+    "SoundRecorder/SoundRecorderOphone.apk",
+    "UserManual/UserManual.apk",
+    "PhoneDemo/PhoneDemo.apk",
+    "Music/MusicOphone.apk",
+    "SettingsOphone/Settings.apk"
+)
+
+CURRENT_DATE = datetime.datetime.now().strftime('%Y%m%d')
+CURRENT_PATH = commands.getstatusoutput("pwd")[1]
+DAILYBUILD_PATH = "/home/%s/remote/dailybuild/%s" % (os.getlogin(), CURRENT_DATE)
+
+def get_project_name(abspath):
+    projects_info = get_projects_info()
+    for project in projects_info.keys():
+        if project in CURRENT_PATH:
+            return project
+    print _red("Error : Wrong project path %s! should be one of:" % abspath)
+    show_projects()
+    sys.exit(0)
+
+def func_apk():
+    project_name = get_project_name(CURRENT_PATH)
+    dest_path = None
+    doker_path = commands.getstatusoutput("find . -maxdepth 3 -name doker -type d")[1]
+    think_path = commands.getstatusoutput("find . -maxdepth 3 -name think -type d")[1]
+    if not doker_path:
+        #print _red("No doker directory in %s" % CURRENT_PATH)
+        #sys.exit(0)
+        if not think_path:
+            print _red("No dest directory in %s" % CURRENT_PATH)
+            sys.exit(0)
+        dest_path = think_path
+    else:
+        dest_path = doker_path
+    dest_path = os.path.join(CURRENT_PATH, dest_path.split()[0])
+    apk_path = None
+    if os.path.exists(DAILYBUILD_PATH):
+        os.chdir(DAILYBUILD_PATH)
+        filenames = commands.getstatusoutput("ls")[1].split()
+        for filename in filenames:
+            if project_name in filename and "apksreleasetools" in filename:
+                apk_path = os.path.join(DAILYBUILD_PATH, filename)
+    else:
+        print _red("dailybuild path : %s is not exists!" % DAILYBUILD_PATH)
+        sys.exit(0)
+    if apk_path:
+        os.chdir(apk_path)
+        if os.path.exists("misc/app"):
+            os.chdir(dest_path)
+            if not os.path.exists("packages"):
+                print _red("No packages directory in %s" % dest_path)
+            os.chdir("packages")
+            for one in LIST_TO_COPY_APKS:
+                strs = one.split("/");
+                apk = strs[1];
+                out = commands.getstatusoutput("find {}/misc/app -name {}".format(apk_path, apk))[1]
+                dsts = commands.getstatusoutput("find . -name {} -type d".format(strs[0]))[1].split()
+                for dst in dsts:
+                    if out:
+                        cmd = "cp -f %s %s" % (out, dst)
+                        print _green("now running : %s" % cmd)
+                        os.system(cmd)
+        else:
+            print _red("%s no apks!" % apk_path)
+    else:
+        print _red("No release apks at %s for project %s!" % (CURRENT_DATE, project_name))
+
+def func_details(project_name):
+    info = get_project_info_by_name(project_name)
+    if info:
+        keys = info.keys()
+        for key in keys:
+            if len(key) > 6:
+                print _yellow("%s \t: %s" % (key, info[key]))
+            else:
+                print _yellow("%s \t\t: %s" % (key, info[key]))
+
+def func_build_user(project_name):
+    if is_project_exist(project_name):
+        ds1 = {}
+        ds1["project"] = project_name
+        ds1["committer"] = pwd.getpwuid(os.getuid())[0]
+        ds1["quick"] = True
+        ds1["mode"] = "user"
+        if not trigger_build(ds1):
+            print "trigger build failed!"
+            sys.exit(-1)
+
+def func_build(project_name, mode):
+    if is_project_exist(project_name):
+        if is_mode_exist(mode):
+            ds1 = {}
+            ds1["project"] = project_name
+            ds1["committer"] = pwd.getpwuid(os.getuid())[0]
+            ds1["quick"] = True
+            ds1["mode"] = mode
+            if not trigger_build(ds1):
+                print "trigger build failed!"
+                sys.exit(-1)
+
+def func_build_apk(project_name):
+    if is_project_exist(project_name):
+        ds1 = {}
+        ds1["project"] = project_name
+        ds1["committer"] = "apksreleasetools"
+        ds1["quick"] = True
+        ds1["mode"] = "eng"
+        if not trigger_build(ds1):
+            print "trigger build failed!"
+            sys.exit(-1)
+
+def func_1(project_name, mode):
+    func_build(project_name, mode)
+
+def func_2(project_name):
+    func_build_user(project_name)
+
+def func_3(project_name):
+    func_build_apk(project_name)
+
+def func_4(project_name):
+    func_details(project_name)
+
+def func_5():
+    func_apk()
+
+def show_functions():
+    print _yellow("Functions:")
+    print "    [1]build      ----- build selected project in selected mode"
+    print "    [2]build_user ----- build selected project in user mode"
+    print "    [3]build_apk  ----- build selected project in eng mode for apksreleasetools"
+    print "    [4]details    ----- display the selected project for details"
+    print "    [5]apk        ----- copy doker release apks from dailybuild to current project"
+
+def show_projects():
+    print _yellow("All-Projects:")
+    projects_info = get_projects_info()
+    projects = sorted(projects_info.keys())
+    index = 0
+    for key in projects:
+        print "    [%02d] %s" % (index, key)
+        index += 1
+
+def show_modes():
+    print _yellow("All-modes:")
+    print "    [0] user"
+    print "    [1] userdebug"
+    print "    [2] eng"
+
+def show_example():
+    print _yellow("Example:")
+    print "    refactor 1 mtk_miki_fw556 eng"
+    print "    refactor 2 mtk_miki_fw556"
+    print "    refactor 3 mtk_miki_fw556"
+    print "    refactor 4 mtk_miki_fw556"
+    print "    refactor 5"
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        if len(sys.argv) == 4:
+            str1 = "func_%s('%s', '%s')" % (sys.argv[1], sys.argv[2], sys.argv[3])
+        elif len(sys.argv) == 3:
+            str1 = "func_%s('%s')" % (sys.argv[1], sys.argv[2])
+        else:
+            str1 = "func_%s()" % sys.argv[1]
+        eval(str1)
+    else:
+        show_functions()
+        show_projects()
+        show_example()
+

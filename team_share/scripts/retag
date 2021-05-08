@@ -1,0 +1,6 @@
+ rm cscope.*
+ rm filenametags 
+ rm tags 
+ BuildFilenameTags.sh 
+ cscope -bq
+ ctags -L cscope.files
